@@ -8,7 +8,7 @@ TODO: Implement!
 """
 
 import cv2
-import numpy
+import numpy as np
 
 
 def homography(image_a, image_b, bff_match=False):
@@ -21,7 +21,34 @@ def homography(image_a, image_b, bff_match=False):
     Returns: the 3x3 perspective transformation matrix (aka homography)
              mapping points in image_b to corresponding points in image_a.
     """
-    pass
+
+    # Initiate SIFT detector
+    sift = cv2.SIFT()
+
+    # find the keypoints and descriptors with SIFT
+    kp1, des1 = sift.detectAndCompute(image_a, None)
+    kp2, des2 = sift.detectAndCompute(image_b, None)
+
+    FLANN_INDEX_KDTREE = 0
+    index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
+    search_params = dict(checks=50)
+
+    flann = cv2.FlannBasedMatcher(index_params, search_params)
+
+    matches = flann.knnMatch(des1, des2, k=2)
+
+    # store all the good matches as per Lowe's ratio test
+    good = []
+    for m, n in matches:
+        if m.distance < 0.4*n.distance:
+            good.append(m)
+
+    src_pts = np.float32([kp1[m.queryIdx].pt for m in good])
+    dst_pts = np.float32([kp2[m.trainIdx].pt for m in good])
+
+    H, status = cv2.findHomography(dst_pts, src_pts, cv2.RANSAC, 1.0)
+
+    return H
 
 
 def warp_image(image, homography):
