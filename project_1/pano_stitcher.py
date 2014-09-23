@@ -40,13 +40,13 @@ def homography(image_a, image_b):
     # store all the good matches as per Lowe's ratio test
     good = []
     for m, n in matches:
-        if m.distance < 0.4*n.distance:
+        if m.distance < 0.7*n.distance:
             good.append(m)
 
     src_pts = np.float32([kp1[m.queryIdx].pt for m in good])
     dst_pts = np.float32([kp2[m.trainIdx].pt for m in good])
 
-    H, status = cv2.findHomography(dst_pts, src_pts, cv2.RANSAC, 1.0)
+    H, status = cv2.findHomography(dst_pts, src_pts, cv2.LMEDS, 1.0)
 
     return H
 
@@ -70,11 +70,25 @@ def warp_image(image, homography):
         offset translation component of the homography.
     """
 
-    h, w = image.shape[:2]
+    img_alpha = cv2.cvtColor(image, cv2.COLOR_BGR2BGRA)
+    h, w = img_alpha.shape[:2]
 
-    warpedImage = cv2.warpPerspective(image, homography, (h, w))
+    img_pts = np.float32([[0, 0], [w, 0], [0, h], [w, h]]).reshape(-1, 1, 2)
+    warped_pts = cv2.perspectiveTransform(img_pts, homography)
 
-    return warpedImage
+    max_0 = max(warped_pts[0][0][0], warped_pts[1][0][0],
+                warped_pts[2][0][0], warped_pts[3][0][0])
+    max_1 = max(warped_pts[0][0][1], warped_pts[1][0][1],
+                warped_pts[2][0][1], warped_pts[3][0][1])
+    min_0 = min(warped_pts[0][0][0], warped_pts[1][0][0],
+                warped_pts[2][0][0], warped_pts[3][0][0])
+    min_1 = min(warped_pts[0][0][1], warped_pts[1][0][1],
+                warped_pts[2][0][1], warped_pts[3][0][1])
+
+    warpedImage = cv2.warpPerspective(img_alpha,
+                                      homography, (max_0-min_0, max_1-min_1))
+
+    return warpedImage, (warped_pts[0][0][0], warped_pts[0][0][1])
 
 
 def create_mosaic(images, origins):
