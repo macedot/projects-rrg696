@@ -1,0 +1,2 @@
+You can run the script by either entering python my_panos.py
+on the command line or by double clicking it.
