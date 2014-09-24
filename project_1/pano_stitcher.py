@@ -70,9 +70,11 @@ def warp_image(image, homography):
         offset translation component of the homography.
     """
 
+    # convert 3-channel image into a 4-channel image
     img_alpha = cv2.cvtColor(image, cv2.COLOR_BGR2BGRA)
     h, w = img_alpha.shape[:2]
 
+    # find the new dimensions of the warped image
     img_pts = np.float32([[0, 0], [w, 0], [0, h], [w, h]]).reshape(-1, 1, 2)
     warped_pts = cv2.perspectiveTransform(img_pts, homography)
 
@@ -85,6 +87,7 @@ def warp_image(image, homography):
     min_1 = min(warped_pts[0][0][1], warped_pts[1][0][1],
                 warped_pts[2][0][1], warped_pts[3][0][1])
 
+    # warp the image using the homography provided
     warpedImage = cv2.warpPerspective(img_alpha,
                                       homography, (max_0-min_0, max_1-min_1))
 
@@ -103,4 +106,24 @@ def create_mosaic(images, origins):
              in the mosaic not covered by any input image should have their
              alpha channel set to zero.
     """
-    pass
+
+    # calculate the dimensions of the panoramic image
+    h, w = 0, 0
+    for image in images:
+        w += image.shape[1]
+        if image.shape[0] > h:
+            h = image.shape[0]
+
+    # create a new blank image with panorama dimensions
+    mosaic = np.zeros((h, w, 3), np.uint8)
+    mosaic = cv2.cvtColor(mosaic, cv2.COLOR_BGR2BGRA)
+
+    # stitch images together using origin points
+    off_h, off_w = 0, 0
+
+    for x in range(0, len(images)):
+        mosaic[off_h: off_h+images[x].shape[0],
+               off_w: off_w+images[x].shape[1]] = images[x]
+        off_w += images[x].shape[1]
+
+    return mosaic
