@@ -107,7 +107,7 @@ def create_mosaic(images, origins):
              alpha channel set to zero.
     """
 
-    # calculate the dimensions of the panoramic image
+    '''# calculate the dimensions of the panoramic image
     h, w = 0, 0
     for image in images:
         w += image.shape[1]
@@ -125,5 +125,41 @@ def create_mosaic(images, origins):
         mosaic[off_h: off_h+images[x].shape[0],
                off_w: off_w+images[x].shape[1]] = images[x]
         off_w += images[x].shape[1]
+
+    return mosaic'''
+    min_origin_h = 0
+    min_origin_w = 0
+
+    for k in range(len(images)):
+        if origins[k][0] < min_origin_h:
+            min_origin_h = origins[k][0]
+        if origins[k][1] < min_origin_w:
+            min_origin_w = origins[k][1]
+
+    h = images[0].shape[0]
+    w = 0
+
+    for k in range(len(images)):
+        if origins[k][0] > h:
+            h = origins[k][0]
+        w += images[k].shape[1]
+
+    if min_origin_h < 0:
+        h -= min_origin_h
+    if min_origin_w < 0:
+        w -= min_origin_w
+
+    mosaic = np.zeros((h, w, 3), np.uint8)
+    mosaic = cv2.cvtColor(mosaic, cv2.COLOR_BGR2BGRA)
+
+    for k in range(len(images)):
+        a = images[k].shape[0]
+        b = images[k].shape[1]
+        origin_h = origins[k][0]
+        origin_w = origins[k][1]
+        for i in range(a):
+            for j in range(b):
+                mosaic[i+(origin_w-min_origin_w),
+                       j+(origin_h-min_origin_h)] = images[k][i, j]
 
     return mosaic
