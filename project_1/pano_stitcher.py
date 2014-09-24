@@ -107,26 +107,6 @@ def create_mosaic(images, origins):
              alpha channel set to zero.
     """
 
-    '''# calculate the dimensions of the panoramic image
-    h, w = 0, 0
-    for image in images:
-        w += image.shape[1]
-        if image.shape[0] > h:
-            h = image.shape[0]
-
-    # create a new blank image with panorama dimensions
-    mosaic = np.zeros((h, w, 3), np.uint8)
-    mosaic = cv2.cvtColor(mosaic, cv2.COLOR_BGR2BGRA)
-
-    # stitch images together using origin points
-    off_h, off_w = 0, 0
-
-    for x in range(0, len(images)):
-        mosaic[off_h: off_h+images[x].shape[0],
-               off_w: off_w+images[x].shape[1]] = images[x]
-        off_w += images[x].shape[1]
-
-    return mosaic'''
     min_origin_h = 0
     min_origin_w = 0
 
